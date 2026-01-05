@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pizza App – Dimitri</title>
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pizza App">
+
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;margin:0;padding:16px;background:#f2f2f7;color:#111}
+.container{max-width:420px;margin:auto}
+h1{text-align:center;margin-bottom:20px}
+.card{background:#fff;border-radius:18px;padding:16px;margin-bottom:16px;box-shadow:0 8px 20px rgba(0,0,0,.08)}
+label{font-weight:600;display:block;margin-bottom:6px}
+select,input{width:100%;padding:14px;font-size:16px;border-radius:12px;border:1px solid #ccc}
+button{width:100%;padding:16px;font-size:17px;font-weight:bold;border-radius:14px;border:none;background:#ff3b30;color:#fff;margin-top:8px}
+pre{background:#1c1c1e;color:#0f0;padding:14px;border-radius:14px;font-size:14px;white-space:pre-wrap}
+.info{font-size:14px;color:#555;margin-top:6px}
+</style>
+</head>
+
+<body>
+<div class="container">
+<h1>🍕 Pizza App</h1>
+
+<div class="card">
+<label>Profil</label>
+<select id="profil" onchange="setProfil()">
+<option value="ete">☀️ Été</option>
+<option value="hiver">❄️ Hiver</option>
+<option value="manuel" selected>🧠 Manuel</option>
+</select>
+</div>
+
+<div class="card">
+<label>Type d’empâtement</label>
+<select id="empatement">
+<option value="direct">Empâtement direct</option>
+<option value="biga">Biga 100 %</option>
+<option value="poolish">Poolish</option>
+</select>
+</div>
+
+<div class="card">
+<label>Fermentation</label>
+<label><input type="radio" name="modeFerment" value="TA" checked> Température ambiante</label>
+<label><input type="radio" name="modeFerment" value="TC"> Température contrôlée</label>
+
+<label id="labTA">Température fermentation TA (°C)</label>
+<input type="number" id="tempFermentTA" value="20">
+
+<label id="labTC" style="display:none">Température fermentation TC (°C)</label>
+<input type="number" id="tempFermentTC" value="4" style="display:none">
+
+<label>Durée fermentation (heures)</label>
+<input type="number" id="duree" value="24">
+</div>
+
+<div class="card">
+<label>Température ambiante de travail (°C)</label>
+<input type="number" id="tempAmb" value="20">
+
+<label>Température farine (°C)</label>
+<input type="number" id="tempFarine" value="20">
+
+<label>Friction pétrin (°C)</label>
+<input type="number" id="friction" value="6">
+
+<label>Température pâte cible (°C)</label>
+<input type="number" id="tempPate" value="23">
+
+<label>Température eau conseillée (°C)</label>
+<input type="number" id="tempEau" readonly>
+</div>
+
+<div class="card">
+<label>Farine</label>
+<select id="farine" onchange="changerFarine()"></select>
+<div id="farineInfo" class="info"></div>
+</div>
+
+<div class="card">
+<label>Hydratation (%)</label>
+<input type="number" id="hydratation" value="60">
+</div>
+
+<div class="card">
+<label>Nombre de pizzas</label>
+<input type="number" id="pizzas" value="4">
+<label>Poids pâton (g)</label>
+<input type="number" id="poids" value="280">
+</div>
+
+<button onclick="calculer()">Calculer</button>
+<button onclick="exportPDF()">Exporter PDF</button>
+<button onclick="sauverRecette()">Sauver la recette</button>
+
+<div class="card"><pre id="fiche"></pre></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+const farines={
+caputo_pizzeria:{nom:"Caputo Pizzeria",hydra:60,w:"W260",abs:"55–60%"},
+caputo_cuoco:{nom:"Caputo Cuoco",hydra:62,w:"W300",abs:"60–62%"},
+caputo_nuvola:{nom:"Caputo Nuvola",hydra:65,w:"W280",abs:"63–65%"},
+caputo_supernuvola:{nom:"Caputo Super Nuvola",hydra:68,w:"W320",abs:"68–70%"},
+denti_anima:{nom:"Denti Anima Verace",hydra:62,w:"W280",abs:"60–62%"},
+petra_0102:{nom:"Petra 0102 HP",hydra:64,w:"W300",abs:"63–65%"}
+};
+
+const farineSelect=document.getElementById("farine");
+Object.keys(farines).forEach(k=>{
+const o=document.createElement("option");
+o.value=k;o.textContent=farines[k].nom;
+farineSelect.appendChild(o);
+});
+
+document.querySelectorAll('input[name="modeFerment"]').forEach(r=>{
+r.addEventListener("change",()=>{
+labTA.style.display=r.value==="TA"?"block":"none";
+tempFermentTA.style.display=r.value==="TA"?"block":"none";
+labTC.style.display=r.value==="TC"?"block":"none";
+tempFermentTC.style.display=r.value==="TC"?"block":"none";
+});
+});
+
+function setProfil(){
+if(profil.value==="ete"){tempAmb.value=26;tempFarine.value=24}
+if(profil.value==="hiver"){tempAmb.value=16;tempFarine.value=16}
+}
+
+function changerFarine(){
+const f=farines[farine.value];
+hydratation.value=f.hydra;
+farineInfo.innerHTML=`W : <b>${f.w}</b> · Absorption : <b>${f.abs}</b>`;
+}
+
+function calculer(){
+const mode=document.querySelector('input[name="modeFerment"]:checked').value;
+const Tferment=mode==="TA"?+tempFermentTA.value:+tempFermentTC.value;
+
+const Tamb=+tempAmb.value;
+const TF=+tempFarine.value;
+const F=+friction.value;
+const TP=+tempPate.value;
+
+const tempE=(TP*3)-Tamb-TF-F;
+tempEau.value=tempE.toFixed(1);
+
+const pizzasV=+pizzas.value;
+const poidsV=+poids.value;
+const hyd=+hydratation.value/100;
+const dureeV=+duree.value;
+const emp=empatement.value;
+
+const selPct=0.028;
+let levureBase=0.002*(20/Tferment)*(24/dureeV);
+
+const total=pizzasV*poidsV;
+const farineTot=total/(1+hyd+selPct);
+const eauTot=farineTot*hyd;
+const sel=farineTot*selPct;
+
+let txt=`🍕 FICHE PROTOCOLE\n\n`;
+
+if(emp==="direct"){
+txt+=`EMPÂTEMENT DIRECT\nFarine : ${farineTot.toFixed(1)} g\nEau : ${eauTot.toFixed(1)} g\nSel : ${sel.toFixed(1)} g\nLevure : ${(farineTot*levureBase).toFixed(2)} g`;
+}
+
+if(emp==="biga"){
+const fb=farineTot*0.5;
+const eb=fb*0.45;
+txt+=`BIGA 100 %\n\nBiga :\nFarine : ${fb.toFixed(1)} g\nEau : ${eb.toFixed(1)} g\nLevure : ${(fb*0.001).toFixed(2)} g\n\nFinition :\nFarine : ${(farineTot-fb).toFixed(1)} g\nEau : ${(eauTot-eb).toFixed(1)} g\nSel : ${sel.toFixed(1)} g`;
+}
+
+if(emp==="poolish"){
+const fp=farineTot*0.5;
+txt+=`POOLISH\n\nPoolish :\nFarine : ${fp.toFixed(1)} g\nEau : ${fp.toFixed(1)} g\nLevure : ${(fp*0.001).toFixed(2)} g\n\nFinition :\nFarine : ${(farineTot-fp).toFixed(1)} g\nEau : ${(eauTot-fp).toFixed(1)} g\nSel : ${sel.toFixed(1)} g`;
+}
+
+fiche.textContent=txt+`\n\nTempérature eau conseillée : ${tempE.toFixed(1)} °C`;
+}
+
+function exportPDF(){
+const {jsPDF}=window.jspdf;
+const pdf=new jsPDF();
+pdf.text(fiche.textContent,10,10);
+pdf.save("Pizza-Protocole.pdf");
+}
+
+function sauverRecette(){
+localStorage.setItem("pizzaRecette",fiche.textContent);
+alert("Recette sauvegardée 👍");
+}
+
+changerFarine();
+</script>
+</body>
+</html>
