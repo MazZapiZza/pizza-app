@@ -3,82 +3,34 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pizza App – V6.3</title>
+<title>Pizza App – V6.3.6</title>
 
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Pizza App">
 
 <style>
-:root{
-  --bg:#f4f4f6;
-  --card:#ffffff;
-  --accent:#ff3b30;
-  --text:#111;
-  --muted:#666;
-}
-body.dark{
-  --bg:#0f0f12;
-  --card:#1c1c1e;
-  --accent:#ff453a;
-  --text:#f2f2f7;
-  --muted:#aaa;
-}
+:root{--bg:#f4f4f6;--card:#ffffff;--accent:#ff3b30;--text:#111;--muted:#666}
+body.dark{--bg:#0f0f12;--card:#1c1c1e;--accent:#ff453a;--text:#f2f2f7;--muted:#aaa}
 *{box-sizing:border-box}
-body{
-  margin:0;
-  padding:16px;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-  background:var(--bg);
-  color:var(--text);
-}
+body{margin:0;padding:16px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text)}
 .container{max-width:440px;margin:auto}
 h1{text-align:center;margin-bottom:6px}
 .subtitle{text-align:center;color:var(--muted);margin-bottom:16px;font-size:14px}
-.card{
-  background:var(--card);
-  border-radius:16px;
-  padding:16px;
-  margin-bottom:14px;
-  box-shadow:0 6px 16px rgba(0,0,0,.12);
-}
+.card{background:var(--card);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 6px 16px rgba(0,0,0,.12)}
 .section-title{font-size:15px;font-weight:700;margin-bottom:10px}
 label{font-size:14px;font-weight:600;margin-bottom:4px;display:block}
-input,select{
-  width:100%;
-  padding:12px;
-  border-radius:10px;
-  border:1px solid #444;
-  font-size:15px;
-  margin-bottom:10px;
-  background:var(--card);
-  color:var(--text);
-}
+input,select{width:100%;padding:12px;border-radius:10px;border:1px solid #444;font-size:15px;margin-bottom:10px;background:var(--card);color:var(--text)}
 input[type=range]{padding:0}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-button{
-  width:100%;
-  padding:14px;
-  border:none;
-  border-radius:14px;
-  font-size:16px;
-  font-weight:700;
-  background:var(--accent);
-  color:#fff;
-  cursor:pointer;
-  margin-bottom:10px;
-}
+button{width:100%;padding:14px;border:none;border-radius:14px;font-size:16px;font-weight:700;background:var(--accent);color:#fff;cursor:pointer;margin-bottom:10px}
 .toggle{text-align:right;font-size:13px;cursor:pointer;color:var(--muted)}
-pre{
-  background:#000;
-  color:#0f0;
-  padding:14px;
-  border-radius:12px;
-  font-size:13px;
-  white-space:pre-wrap;
-}
+pre{background:#000;color:#0f0;padding:14px;border-radius:12px;font-size:13px;white-space:pre-wrap}
 .small{font-size:13px;color:var(--muted)}
 .hint{font-size:13px;color:var(--muted);margin-top:-6px}
+.hidden{display:none}
+.pm{display:flex;align-items:center;gap:6px}
+.pm button{width:34px;height:34px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-weight:700}
 </style>
 </head>
 
@@ -88,7 +40,7 @@ pre{
 <div class="toggle" onclick="toggleDark()">🌙 / ☀️ Mode</div>
 
 <h1>🍕 Pizza App</h1>
-<div class="subtitle">V6.3 · Finale stable</div>
+<div class="subtitle">V6.3.6 · Fix slider hydratation</div>
 
 <!-- PROFIL -->
 <div class="card">
@@ -101,6 +53,29 @@ pre{
 </select>
 </div>
 
+<!-- EMPÂTEMENT -->
+<div class="card">
+<div class="section-title">Empâtement</div>
+<select id="empatement" onchange="updateEmpatement()">
+<option value="direct">Direct</option>
+<option value="biga">Biga</option>
+<option value="poolish">Poolish</option>
+</select>
+
+<div id="bigaOptions" class="hidden">
+<label>% farine en biga</label>
+<input type="number" id="bigaPct" value="50" min="30" max="70">
+
+<label>Gestion levure biga</label>
+<select id="bigaLevureMode">
+<option value="j1">100 % en J-1 (biga)</option>
+<option value="split">Répartie J-1 / J0 (rafraîchi)</option>
+</select>
+
+<div class="small">Hydratation biga : 45 % (fixe)</div>
+</div>
+</div>
+
 <!-- FARINE -->
 <div class="card">
 <div class="section-title">Farine</div>
@@ -108,57 +83,68 @@ pre{
 <div id="farineInfo" class="small"></div>
 </div>
 
-<!-- HYDRATATION -->
+<!-- HYDRATATION & QUANTITÉS -->
 <div class="card">
-<div class="section-title">Hydratation</div>
-<label>Hydratation (%)</label>
+<div class="section-title">Hydratation & Quantités</div>
+
 <input type="number" id="hydratation" min="55" max="80">
-<input type="range" id="hydraSlider" min="55" max="80" step="1">
+<input type="range" id="hydraSlider" min="55" max="80">
 <div id="hydraHint" class="hint"></div>
 
-<div class="grid-2">
-<div><label>Pizzas</label><input type="number" id="pizzas" value="4"></div>
-<div><label>Pâton (g)</label><input type="number" id="poids" value="280"></div>
+<label>Pizzas</label>
+<div class="pm">
+<button onclick="step('pizzas',-1)">−</button>
+<input id="pizzas" value="4">
+<button onclick="step('pizzas',1)">+</button>
 </div>
+
+<label>Pâton (g)</label>
+<div class="pm">
+<button onclick="step('poids',-10)">−</button>
+<input id="poids" value="280">
+<button onclick="step('poids',10)">+</button>
+</div>
+</div>
+
+<!-- SEL -->
+<div class="card">
+<div class="section-title">Sel</div>
+<input type="number" id="selPct" value="2.8" step="0.1" min="2.5" max="3">
 </div>
 
 <!-- FERMENTATION -->
 <div class="card">
 <div class="section-title">Fermentation</div>
 
-<label>TA 1 – Température ambiante (h / °C)</label>
+<label>TA 1 (h / °C)</label>
 <div class="grid-2">
-<input type="number" id="ta1h" value="4">
-<input type="number" id="ta1t" value="20">
+<div class="pm"><button onclick="step('ta1h',-1)">−</button><input id="ta1h" value="4"><button onclick="step('ta1h',1)">+</button></div>
+<div class="pm"><button onclick="step('ta1t',-1)">−</button><input id="ta1t" value="20"><button onclick="step('ta1t',1)">+</button></div>
 </div>
 
-<label>TC – Température contrôlée (h / °C)</label>
+<label>TC (h / °C)</label>
 <div class="grid-2">
-<input type="number" id="tcH" value="16">
-<input type="number" id="tcT" value="4">
+<div class="pm"><button onclick="step('tcH',-1)">−</button><input id="tcH" value="16"><button onclick="step('tcH',1)">+</button></div>
+<div class="pm"><button onclick="step('tcT',-1)">−</button><input id="tcT" value="4"><button onclick="step('tcT',1)">+</button></div>
 </div>
 
-<label>TA 2 – Retour ambiant (h / °C)</label>
+<label>TA 2 (h / °C)</label>
 <div class="grid-2">
-<input type="number" id="ta2h" value="4">
-<input type="number" id="ta2t" value="20">
+<div class="pm"><button onclick="step('ta2h',-1)">−</button><input id="ta2h" value="4"><button onclick="step('ta2h',1)">+</button></div>
+<div class="pm"><button onclick="step('ta2t',-1)">−</button><input id="ta2t" value="20"><button onclick="step('ta2t',1)">+</button></div>
 </div>
 </div>
 
 <!-- LEVURE & FOUR -->
 <div class="card">
 <div class="section-title">Levure & Four</div>
-
 <select id="typeLevure">
 <option value="fraiche">Levure fraîche</option>
 <option value="seche">Levure sèche</option>
 </select>
-
 <select id="modeLevure">
 <option value="auto">Levure automatique</option>
-<option value="manuel">Levure manuelle</option>
 </select>
-
 <select id="modeFour" onchange="updateFourHint()"></select>
 <div id="fourHint" class="hint"></div>
 </div>
@@ -171,10 +157,14 @@ pre{
 <!-- GLOSSAIRE -->
 <div class="card">
 <div class="section-title">Glossaire</div>
-<p class="small"><b>TA</b> : Température ambiante (18–25 °C). Plus chaud = fermentation plus rapide.</p>
-<p class="small"><b>TC</b> : Température contrôlée (frigo 3–6 °C). Fermentation lente et arômes.</p>
-<p class="small"><b>Hydratation</b> : Pourcentage d’eau par rapport à la farine.<br>
-60 % = facile · 65 % = équilibré · 70 %+ = très souple</p>
+<p class="small"><b>Empâtement</b> : méthode de construction de la pâte.</p>
+<p class="small"><b>Direct</b> : tous les ingrédients mélangés en une seule fois.</p>
+<p class="small"><b>Biga</b> : préferment ferme (~45 % eau).</p>
+<p class="small"><b>Poolish</b> : préferment liquide (100 % eau).</p>
+<p class="small"><b>Rafraîchi (J0)</b> : ajout final après préferment.</p>
+<p class="small"><b>TA</b> : température ambiante.</p>
+<p class="small"><b>TC</b> : température contrôlée.</p>
+<p class="small"><b>Hydratation</b> : pourcentage d’eau par rapport à la farine.</p>
 </div>
 
 </div>
@@ -183,130 +173,108 @@ pre{
 <script>
 /* DARK MODE */
 if(localStorage.getItem("dark")==="1") document.body.classList.add("dark");
-function toggleDark(){
-document.body.classList.toggle("dark");
-localStorage.setItem("dark",document.body.classList.contains("dark")?"1":"0");
-}
+function toggleDark(){document.body.classList.toggle("dark");localStorage.setItem("dark",document.body.classList.contains("dark")?"1":"0");}
+function step(id,v){const i=document.getElementById(id);i.value=Math.max(0,(+i.value||0)+v);}
 
 /* FARINES */
 const farines={
-caputo_pizzeria:{nom:"Caputo Pizzeria",w:"W260",abs:"55–60%",hydra:60,levure:1},
-caputo_cuoco:{nom:"Caputo Cuoco",w:"W300",abs:"60–62%",hydra:62,levure:0.85},
-caputo_nuvola:{nom:"Caputo Nuvola",w:"W280",abs:"63–65%",hydra:65,levure:0.9},
-caputo_supernuvola:{nom:"Caputo Super Nuvola",w:"W320",abs:"68–70%",hydra:68,levure:0.8},
-petra_0102:{nom:"Petra 0102 HP",w:"W300",abs:"63–65%",hydra:64,levure:0.9},
-petra_integrale:{nom:"Petra Integrale",w:"W280",abs:"65–70%",hydra:70,levure:1.1},
-denti_anima:{nom:"Denti Anima Verace",w:"W280",abs:"60–62%",hydra:62,levure:0.95}
+caputo_pizzeria:{nom:"Caputo Pizzeria",w:"W260",abs:"55–60%",hydra:60,coef:1},
+caputo_cuoco:{nom:"Caputo Cuoco",w:"W300",abs:"60–62%",hydra:62,coef:0.85},
+caputo_nuvola:{nom:"Caputo Nuvola",w:"W280",abs:"63–65%",hydra:65,coef:0.9},
+caputo_supernuvola:{nom:"Caputo Super Nuvola",w:"W320",abs:"68–70%",hydra:68,coef:0.8},
+petra_0102:{nom:"Petra 0102 HP",w:"W300",abs:"63–65%",hydra:64,coef:0.9},
+petra_integrale:{nom:"Petra Integrale",w:"W280",abs:"65–70%",hydra:70,coef:1.1},
+denti_anima:{nom:"Denti Anima Verace",w:"W280",abs:"60–62%",hydra:62,coef:0.95}
 };
 
 /* FOURS */
 const fours={
-bois:{label:"🔥 Bois",hydra:+2,temp:"430–480 °C",temps:"60–90 s",txt:"Chaleur très vive"},
-elec:{label:"⚡ Électrique",hydra:0,temp:"420–450 °C",temps:"90–120 s",txt:"Chaleur stable"},
-ooni:{label:"🔥 Gaz Ooni",hydra:+1,temp:"420–500 °C",temps:"60–120 s",txt:"Chaleur forte"}
+bois:{label:"🔥 Bois",hydra:+2,temp:"430–480 °C",txt:"Chaleur très vive"},
+elec:{label:"⚡ Électrique",hydra:0,temp:"420–450 °C",txt:"Chaleur stable"},
+ooni:{label:"🔥 Gaz Ooni",hydra:+1,temp:"420–500 °C",txt:"Chaleur forte"}
 };
 
-/* INIT */
-Object.keys(farines).forEach(k=>{
-const o=document.createElement("option");
-o.value=k;o.textContent=farines[k].nom;
-farine.appendChild(o);
-});
-Object.keys(fours).forEach(k=>{
-const o=document.createElement("option");
-o.value=k;o.textContent=fours[k].label;
-modeFour.appendChild(o);
-});
+Object.keys(farines).forEach(k=>{const o=document.createElement("option");o.value=k;o.textContent=farines[k].nom;farine.appendChild(o);});
+Object.keys(fours).forEach(k=>{const o=document.createElement("option");o.value=k;o.textContent=fours[k].label;modeFour.appendChild(o);});
 changerFarine();updateFourHint();
 
-/* FARINE */
+/* HYDRATATION SYNC */
+function updateHydraHint(v){
+  if(v<=60) hydraHint.textContent="Pâte facile";
+  else if(v<=65) hydraHint.textContent="Bon équilibre";
+  else if(v<=70) hydraHint.textContent="Très souple";
+  else hydraHint.textContent="Très technique";
+}
+hydraSlider.oninput=()=>{hydratation.value=hydraSlider.value;updateHydraHint(+hydraSlider.value);}
+hydratation.oninput=()=>{hydraSlider.value=hydratation.value;updateHydraHint(+hydratation.value);}
+updateHydraHint(+hydratation.value);
+
 function changerFarine(){
 const f=farines[farine.value];
 hydratation.value=f.hydra;
 hydraSlider.value=f.hydra;
 updateHydraHint(f.hydra);
-farineInfo.innerHTML=`<b>${f.nom}</b><br>Force : ${f.w} · Hydratation conseillée : ${f.abs}`;
+farineInfo.innerHTML=`<b>${f.nom}</b><br>Force : ${f.w} · Hydratation ${f.abs}`;
 }
 
-/* HYDRATATION UX */
-function updateHydraHint(v){
-if(v<=60) hydraHint.textContent="Pâte facile";
-else if(v<=65) hydraHint.textContent="Bon équilibre";
-else if(v<=70) hydraHint.textContent="Très souple";
-else hydraHint.textContent="Très technique";
-}
-hydraSlider.oninput=()=>{hydratation.value=hydraSlider.value;updateHydraHint(+hydraSlider.value);}
-hydratation.oninput=()=>{hydraSlider.value=hydratation.value;updateHydraHint(+hydratation.value);}
-
-/* FOUR */
 function updateFourHint(){fourHint.textContent=fours[modeFour.value].txt;}
 
-/* PROFILS */
-const profils={
-napo:{hydra:62,ta1h:6,tcH:16,ta2h:2,four:"ooni"},
-romaine:{hydra:58,ta1h:8,tcH:24,ta2h:4,four:"elec"},
-teglia:{hydra:75,ta1h:4,tcH:24,ta2h:4,four:"elec"}
-};
-function appliquerProfil(){
-const p=profils[profil.value];
-if(!p) return;
-hydratation.value=p.hydra;
-hydraSlider.value=p.hydra;
-ta1h.value=p.ta1h;
-tcH.value=p.tcH;
-ta2h.value=p.ta2h;
-modeFour.value=p.four;
-updateHydraHint(p.hydra);
-updateFourHint();
+function updateEmpatement(){
+bigaOptions.classList.toggle("hidden",empatement.value!=="biga");
 }
 
-/* CALCUL */
 function calculer(){
 const f=farines[farine.value];
 const four=fours[modeFour.value];
-const hydUser=+hydratation.value;
-const hydCalc=(hydUser+four.hydra)/100;
 const total=pizzas.value*poids.value;
-const selPct=0.028;
+const hyd=(+hydratation.value+four.hydra)/100;
+const sel=selPct.value/100;
 
-const farineTot=total/(1+hydCalc+selPct);
-const eau=farineTot*hydCalc;
-const sel=farineTot*selPct;
+const farineTot=total/(1+hyd+sel);
+const eauTot=farineTot*hyd;
+const selG=farineTot*sel;
 
 const hTot=+ta1h.value + +tcH.value + +ta2h.value;
 const tMoy=(ta1t.value*ta1h.value + tcT.value*tcH.value + ta2t.value*ta2h.value)/hTot;
 
-let levBase=0.002*f.levure;
-if(modeLevure.value==="auto") levBase*=20/tMoy;
-let levure=farineTot*levBase;
-if(typeLevure.value==="seche") levure*=0.33;
+let levTot=farineTot*(0.002*f.coef)*(20/tMoy);
+if(typeLevure.value==="seche") levTot*=0.33;
 
-fiche.textContent=
-`🍕 PROTOCOLE V6.3
+let txt=`🍕 PROTOCOLE V6.3.6\n\nEMPÂTEMENT : ${empatement.value.toUpperCase()}\n\n`;
 
-Farine : ${f.nom} (${f.w})
-Hydratation : ${hydUser} %
+if(empatement.value==="biga"){
+const p=bigaPct.value/100;
+const fB=farineTot*p;
+const eB=fB*0.45;
 
-INGRÉDIENTS
-Farine : ${farineTot.toFixed(1)} g
-Eau : ${eau.toFixed(1)} g
-Sel : ${sel.toFixed(1)} g
-Levure : ${levure.toFixed(2)} g
-
-FERMENTATION
-Durée : ${hTot} h
-Température moyenne : ${tMoy.toFixed(1)} °C
-
-CUISSON
-Four : ${four.label}
-Température : ${four.temp}
-Temps : ${four.temps}`;
+let levJ1=levTot, levJ0=0;
+if(bigaLevureMode.value==="split"){
+levJ1=levTot*0.7;
+levJ0=levTot*0.3;
 }
 
-/* PDF */
+txt+=`BIGA (J-1)\nFarine : ${fB.toFixed(1)} g\nEau : ${eB.toFixed(1)} g\nLevure J-1 : ${levJ1.toFixed(2)} g\n\n`;
+txt+=`RAFRAÎCHI (J0)\nFarine : ${(farineTot-fB).toFixed(1)} g\nEau : ${(eauTot-eB).toFixed(1)} g\nSel : ${selG.toFixed(1)} g\nLevure J0 : ${levJ0.toFixed(2)} g\n`;
+}
+else if(empatement.value==="poolish"){
+const fP=farineTot*0.5;
+const eP=fP;
+const levP=levTot*0.5;
+
+txt+=`POOLISH (J-1)\nFarine : ${fP.toFixed(1)} g\nEau : ${eP.toFixed(1)} g\nLevure J-1 : ${levP.toFixed(2)} g\n\n`;
+txt+=`PÂTE FINALE (J0)\nFarine : ${(farineTot-fP).toFixed(1)} g\nEau : ${(eauTot-eP).toFixed(1)} g\nSel : ${selG.toFixed(1)} g\nLevure J0 : ${(levTot-levP).toFixed(2)} g\n`;
+}
+else{
+txt+=`INGRÉDIENTS\nFarine : ${farineTot.toFixed(1)} g\nEau : ${eauTot.toFixed(1)} g\nSel : ${selG.toFixed(1)} g\nLevure totale : ${levTot.toFixed(2)} g\n`;
+}
+
+txt+=`\nCUISSON\nFour : ${four.label}\nTempérature : ${four.temp}`;
+fiche.textContent=txt;
+}
+
 function exportPDF(){
-const { jsPDF } = window.jspdf;
-const pdf = new jsPDF();
+const { jsPDF }=window.jspdf;
+const pdf=new jsPDF();
 pdf.text(fiche.textContent,10,10);
 pdf.save("Pizza-Protocole.pdf");
 }
