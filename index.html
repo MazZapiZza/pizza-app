@@ -268,31 +268,117 @@ hydratation.oninput=()=>{hydraSlider.value=hydratation.value;updateHydraHint(+hy
 
 function updateEmpatement(){bigaOptions.classList.toggle("hidden",empatement.value!=="biga")}
 function calculer(){
-const f=farines[farine.value],four=fours[modeFour.value];
-const total=pizzas.value*poids.value;
-const hyd=(+hydratation.value+four.hydra)/100;
-const sel=selPct.value/100;
-const farineTot=total/(1+hyd+sel);
-const eau=farineTot*hyd;
-const selG=farineTot*sel;
-let lev=farineTot*(0.002*f.coef);
-if(typeLevure.value==="seche") lev*=.33;
 
-fiche.textContent=
-`🍕 PROTOCOLE FUN PIZZA
+/* --- BASE --- */
+const f = farines[farine.value];
+const four = fours[modeFour.value];
+
+const total = pizzas.value * poids.value;
+const hyd = (+hydratation.value + four.hydra) / 100;
+const sel = selPct.value / 100;
+
+/* --- FARINE / EAU / SEL --- */
+const farineTot = total / (1 + hyd + sel);
+const eauTot = farineTot * hyd;
+const selG = farineTot * sel;
+
+/* --- FERMENTATION (influence levure) --- */
+const hTot = (+ta1h.value) + (+tcH.value) + (+ta2h.value);
+const tMoy =
+  (
+    (ta1t.value * ta1h.value) +
+    (tcT.value * tcH.value) +
+    (ta2t.value * ta2h.value)
+  ) / hTot;
+
+/* --- LEVURE TOTALE (DYNAMIQUE) --- */
+let levTot = farineTot * (0.002 * f.coef) * (20 / tMoy);
+if(typeLevure.value === "seche") levTot *= 0.33;
+
+/* --- TEXTE --- */
+let txt = `🍕 PROTOCOLE FUN PIZZA
 
 Farine : ${f.nom}
 Hydratation : ${hydratation.value} %
 
-Farine : ${farineTot.toFixed(1)} g
-Eau : ${eau.toFixed(1)} g
-Sel : ${selG.toFixed(1)} g
-Levure : ${lev.toFixed(2)} g
+`;
 
+/* ======================================================
+   EMPÂTEMENT DIRECT
+====================================================== */
+if(empatement.value === "direct"){
+  txt +=
+`INGRÉDIENTS
+Farine : ${farineTot.toFixed(1)} g
+Eau : ${eauTot.toFixed(1)} g
+Sel : ${selG.toFixed(1)} g
+Levure : ${levTot.toFixed(2)} g
+`;
+}
+
+/* ======================================================
+   BIGA
+   👉 1 g de levure / kg de farine biga (0,1 %)
+====================================================== */
+if(empatement.value === "biga"){
+  const pct = bigaPct.value / 100;
+
+  const farineB = farineTot * pct;
+  const eauB = farineB * 0.45;
+
+  const levBigaBase = farineB * 0.001; // 1 g / kg
+  let levBiga = levBigaBase;
+  let levFinal = 0;
+
+  if(bigaLevureMode.value === "split"){
+    levBiga = levBigaBase * 0.7;
+    levFinal = levBigaBase * 0.3;
+  }
+
+  txt +=
+`BIGA (J-1)
+Farine : ${farineB.toFixed(1)} g
+Eau : ${eauB.toFixed(1)} g
+Levure : ${levBiga.toFixed(2)} g
+
+PÂTE FINALE (J0)
+Farine : ${(farineTot - farineB).toFixed(1)} g
+Eau : ${(eauTot - eauB).toFixed(1)} g
+Sel : ${selG.toFixed(1)} g
+Levure : ${levFinal.toFixed(2)} g
+`;
+}
+
+/* ======================================================
+   POOLISH
+====================================================== */
+if(empatement.value === "poolish"){
+  const farineP = farineTot * 0.5;
+  const eauP = farineP;
+  const levP = levTot * 0.5;
+
+  txt +=
+`POOLISH (J-1)
+Farine : ${farineP.toFixed(1)} g
+Eau : ${eauP.toFixed(1)} g
+Levure : ${levP.toFixed(2)} g
+
+PÂTE FINALE (J0)
+Farine : ${(farineTot - farineP).toFixed(1)} g
+Eau : ${(eauTot - eauP).toFixed(1)} g
+Sel : ${selG.toFixed(1)} g
+Levure : ${(levTot - levP).toFixed(2)} g
+`;
+}
+
+/* --- FOUR --- */
+txt += `
 Four : ${four.label}
 Température : ${four.temp}
 
 À moment donné… fais confiance à la fermentation 😉`;
+
+fiche.textContent = txt;
 }
 
 function exportPDF(){
