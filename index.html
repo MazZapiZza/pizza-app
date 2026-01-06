@@ -280,10 +280,12 @@ const sel = selPct.value / 100;
 /* --- FARINE / EAU / SEL --- */
 const farineTot = total / (1 + hyd + sel);
 const eauTot = farineTot * hyd;
-const selG = farineTot * sel;
+const selG = farineTot * sel;// === CALCUL LEVURE DYNAMIQUE GLOBAL (TOUS EMPÂTEMENTS) ===
+const hTot =
+  (+ta1h.value || 0) +
+  (+tcH.value || 0) +
+  (+ta2h.value || 0);
 
-/* --- FERMENTATION (influence levure) --- */
-const hTot = (+ta1h.value) + (+tcH.value) + (+ta2h.value);
 const tMoy =
   (
     (ta1t.value * ta1h.value) +
@@ -291,9 +293,12 @@ const tMoy =
     (ta2t.value * ta2h.value)
   ) / hTot;
 
-/* --- LEVURE TOTALE (DYNAMIQUE) --- */
-let levTot = farineTot * (0.002 * f.coef) * (20 / tMoy);
-if(typeLevure.value === "seche") levTot *= 0.33;
+let levTot = farineTot * 0.002 * f.coef * (20 / tMoy);
+
+if (typeLevure.value === "seche") levTot *= 0.33;
+
+
+
 
 /* --- TEXTE --- */
 let txt = `🍕 PROTOCOLE FUN PIZZA
@@ -326,14 +331,27 @@ if(empatement.value === "biga"){
   const farineB = farineTot * pct;
   const eauB = farineB * 0.45;
 
-  const levBigaBase = farineB * 0.001; // 1 g / kg
-  let levBiga = levBigaBase;
-  let levFinal = 0;
+ // Base biga : 1 g / kg farine biga
+let levBigaBase = farineB * 0.001;
 
-  if(bigaLevureMode.value === "split"){
-    levBiga = levBigaBase * 0.7;
-    levFinal = levBigaBase * 0.3;
-  }
+// correction température / durée (comme levure totale)
+levBigaBase *= (20 / tMoy);
+
+let levBiga = levBigaBase;
+let levFinal = 0;
+
+// gestion split J-1 / J0
+if (bigaLevureMode.value === "split") {
+  levBiga = levBigaBase * 0.7;
+  levFinal = levBigaBase * 0.3;
+}
+
+// levure sèche
+if (typeLevure.value === "seche") {
+  levBiga *= 0.33;
+  levFinal *= 0.33;
+}
+
 
   txt +=
 `BIGA (J-1)
