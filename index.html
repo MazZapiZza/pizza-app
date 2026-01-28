@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pizza App – V6.4 Fun Pizza</title>
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pizza App">
+
+<style>
+:root{
+  --bg:#f4f4f6;
+  --card:#ffffff;
+  --accent1:#ff7a18;
+  --accent2:#ff3b30;
+  --text:#111;
+  --muted:#666;
+}
+body.dark{
+  --bg:#0f0f12;
+  --card:#1c1c1e;
+  --accent1:#ff9f0a;
+  --accent2:#ff453a;
+  --text:#f2f2f7;
+  --muted:#aaa;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;padding:16px;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--bg);color:var(--text)
+}
+.container{max-width:440px;margin:auto}
+h1{text-align:center;margin-bottom:4px}
+.subtitle{text-align:center;color:var(--muted);margin-bottom:16px;font-size:14px}
+
+.timeline-step{
+  margin:6px 0;
+  padding:8px 12px;
+  border-radius:12px;
+  background:linear-gradient(135deg,var(--accent1),var(--accent2));
+  color:#fff;
+  font-weight:600;
+  font-size:13px;
+}
+
+
+.card{
+  background:var(--card);
+  border-radius:18px;
+  padding:16px;
+  margin-bottom:14px;
+  box-shadow:0 8px 20px rgba(0,0,0,.15);
+  animation:pop .35s ease;
+}
+@keyframes pop{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+
+.section-title{
+  font-size:15px;font-weight:800;margin-bottom:10px;
+  display:flex;align-items:center;gap:6px
+}
+
+label{font-size:14px;font-weight:600;display:block;margin-bottom:4px}
+input,select{
+  width:100%;padding:12px;border-radius:12px;
+  border:1px solid #444;font-size:15px;
+  margin-bottom:10px;background:var(--card);color:var(--text)
+}
+input[type=range]{padding:0}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+.pm{display:flex;align-items:center;gap:6px}
+.pm button{
+  width:36px;height:36px;border:none;border-radius:10px;
+  background:linear-gradient(135deg,var(--accent1),var(--accent2));
+  color:#fff;font-size:18px;font-weight:900
+}
+
+button.main{
+  width:100%;padding:15px;border:none;border-radius:18px;
+  font-size:17px;font-weight:800;color:#fff;
+  background:linear-gradient(135deg,var(--accent1),var(--accent2));
+  box-shadow:0 8px 18px rgba(255,59,48,.45);
+  transition:transform .15s
+}
+button.main:active{transform:scale(.97)}
+
+.toggle{text-align:right;font-size:13px;cursor:pointer;color:var(--muted)}
+
+pre{
+  background:#000;color:#0f0;padding:14px;border-radius:14px;
+  font-size:13px;white-space:pre-wrap;
+  animation:fade .4s ease
+}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+
+.small{font-size:13px;color:var(--muted)}
+.hint{font-size:13px;color:var(--muted);margin-top:-6px}
+.hidden{display:none}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<div class="toggle" onclick="toggleDark()">🌙 / ☀️ Mode</div>
+
+<h1>🍕 Pizza App</h1>
+<div class="subtitle">V6.4 · Fun Pizza — « À moment donné… faut une bonne pâte »</div>
+
+<!-- PROFIL -->
+<div class="card">
+<div class="section-title">🍕 Profil Pizza</div>
+<select id="profil" onchange="appliquerProfil()">
+<option value="maison">🏠 Maison</option>
+<option value="napo">🇮🇹 Napolitaine</option>
+<option value="romaine">🍕 Romaine</option>
+<option value="teglia">🟫 Teglia</option>
+</select>
+</div>
+
+<!-- EMPÂTEMENT -->
+<div class="card">
+<div class="section-title">🥣 Empâtement</div>
+<select id="empatement" onchange="updateEmpatement()">
+<option value="direct">Direct</option>
+<option value="biga">Biga</option>
+<option value="poolish">Poolish</option>
+</select>
+
+<div id="bigaOptions" class="hidden">
+<label>% farine en biga</label>
+<input type="number" id="bigaPct" value="50" min="30" max="70">
+
+<label>Levure en biga</label>
+<select id="bigaLevureMode">
+<option value="j1">100 % en J-1</option>
+<option value="split">J-1 / J0 (rafraîchi)</option>
+</select>
+
+<div class="small">💡 Biga = 45 % eau, arômes + force</div>
+</div>
+</div>
+
+<!-- FARINE -->
+<div class="card">
+<div class="section-title">🍞 Farine</div>
+<select id="farine" onchange="changerFarine()"></select>
+<div id="farineInfo" class="small"></div>
+</div>
+
+<!-- HYDRATATION -->
+<div class="card">
+<div class="section-title">💧 Hydratation</div>
+<input type="number" id="hydratation" min="55" max="80">
+<input type="range" id="hydraSlider" min="55" max="80">
+<div id="hydraHint" class="hint"></div>
+
+<label>🍕 Pizzas</label>
+<div class="pm">
+<button onclick="step('pizzas',-1)">−</button>
+<input id="pizzas" value="4">
+<button onclick="step('pizzas',1)">+</button>
+</div>
+
+<label>⚖️ Pâton (g)</label>
+<div class="pm">
+<button onclick="step('poids',-10)">−</button>
+<input id="poids" value="280">
+<button onclick="step('poids',10)">+</button>
+</div>
+</div>
+
+<!-- SEL -->
+<div class="card">
+<div class="section-title">🧂 Sel</div>
+<input type="number" id="selPct" value="2.8" step="0.1" min="2.5" max="3">
+</div>
+
+<!-- FERMENTATION -->
+<div class="card">
+<div class="section-title">⏱️ Fermentation</div>
+
+<label>TA 1 (h / °C)</label>
+<div class="grid-2">
+<div class="pm"><button onclick="step('ta1h',-1)">−</button><input id="ta1h" value="4"><button onclick="step('ta1h',1)">+</button></div>
+<div class="pm"><button onclick="step('ta1t',-1)">−</button><input id="ta1t" value="20"><button onclick="step('ta1t',1)">+</button></div>
+</div>
+
+<label>TC (h / °C)</label>
+<div class="grid-2">
+<div class="pm"><button onclick="step('tcH',-1)">−</button><input id="tcH" value="16"><button onclick="step('tcH',1)">+</button></div>
+<div class="pm"><button onclick="step('tcT',-1)">−</button><input id="tcT" value="4"><button onclick="step('tcT',1)">+</button></div>
+</div>
+
+<label>TA 2 (h / °C)</label>
+<div class="grid-2">
+<div class="pm"><button onclick="step('ta2h',-1)">−</button><input id="ta2h" value="4"><button onclick="step('ta2h',1)">+</button></div>
+<div class="pm"><button onclick="step('ta2t',-1)">−</button><input id="ta2t" value="20"><button onclick="step('ta2t',1)">+</button></div>
+</div>
+</div>
+
+<!-- LEVURE & FOUR -->
+<div class="card">
+<div class="section-title">🔥 Levure & Four</div>
+<select id="typeLevure">
+<option value="fraiche">Levure fraîche</option>
+<option value="seche">Levure sèche</option>
+</select>
+<select id="modeFour"></select>
+<div id="fourHint" class="hint"></div>
+</div>
+<!-- DURÉE TOTALE -->
+<div class="card">
+<div class="section-title">⏳ Durée totale fermentation</div>
+
+<div class="grid-2">
+<button class="main" onclick="setDuree(24)">24 h</button>
+<button class="main" onclick="setDuree(36)">36 h</button>
+</div>
+
+<button class="main" onclick="setDuree(48)">48 h</button>
+
+<div class="small">
+La répartition TA / TC / TA s’adapte à la farine
+</div>
+</div>
+
+<!-- PLANNING -->
+<div class="card">
+<div class="section-title">📆 Planning fermentation</div>
+
+<label>Jour de départ</label>
+<input type="date" id="startDate">
+
+<label>Heure de départ (pétrie)</label>
+<input type="time" id="startTime" value="14:00">
+
+<div class="small">
+⏱️ Calcul automatique selon TA → TC → TA
+</div>
+
+<div id="timeline"></div>
+</div>
+
+<button class="main" onclick="calculer()">🍕 Calculer</button>
+<button class="main" onclick="exportPDF()">📄 Export PDF</button>
+
+<div class="card"><pre id="fiche"></pre></div>
+
+<!-- GLOSSAIRE -->
+<div class="card">
+<div class="section-title">📚 Glossaire</div>
+<p class="small"><b>Biga</b> : préferment ferme (≈45 % eau).</p>
+<p class="small"><b>Poolish</b> : préferment liquide (100 % eau).</p>
+<p class="small"><b>Rafraîchi</b> : ajout final après préferment.</p>
+<p class="small"><b>TA</b> : température ambiante.</p>
+<p class="small"><b>TC</b> : température contrôlée (frigo).</p>
+<p class="small"><b>Hydratation</b> : eau / farine (%).</p>
+</div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+if(localStorage.getItem("dark")==="1") document.body.classList.add("dark");
+function toggleDark(){document.body.classList.toggle("dark");localStorage.setItem("dark",document.body.classList.contains("dark")?"1":"0");}
+function step(id,v){const i=document.getElementById(id);i.value=Math.max(0,(+i.value||0)+v);}
+
+/* FARINES */
+const farines={
+caputo_pizzeria:{nom:"Caputo Pizzeria",w:"W260",abs:"55–60%",hydra:60,coef:1},
+caputo_cuoco:{nom:"Caputo Cuoco",w:"W300",abs:"60–62%",hydra:62,coef:.85},
+caputo_nuvola:{nom:"Caputo Nuvola",w:"W280",abs:"63–65%",hydra:65,coef:.9},
+caputo_supernuvola:{nom:"Caputo Super Nuvola",w:"W320",abs:"68–70%",hydra:68,coef:.8},
+petra_0102:{nom:"Petra 0102 HP",w:"W300",abs:"63–65%",hydra:64,coef:.9},
+petra_integrale:{nom:"Petra Integrale",w:"W280",abs:"65–70%",hydra:70,coef:1.1},
+denti_anima:{nom:"Denti Anima Verace",w:"W280",abs:"60–62%",hydra:62,coef:.95},
+dallagiovanna_napoletana:{
+  nom:"Dallagiovanna – La Napoletana",
+  w:"W310",
+  abs:"62–70%",
+  hydra:64,
+  coef:0.85
+},
+
+piantoni_per:{
+  nom:"Molino Piantoni – Farina PER",
+  w:"W300",
+  abs:"62–65%",
+  hydra:63,
+  coef:0.9
+},
+
+vigevano_pizza:{
+  nom:"Molino Vigevano – Pizza",
+  w:"W280",
+  abs:"60–63%",
+  hydra:62,
+  coef:0.95
+},
+
+dallagiovanna_monica:{
+  nom:"Dallagiovanna – Monica",
+  w:"W260",
+  abs:"58–62%",
+  hydra:60,
+  coef:1
+}
+
+
+};
+
+/* FOURS */
+const fours={
+bois:{label:"🔥 Bois",hydra:+2,temp:"430–480 °C",txt:"Chaleur très vive"},
+elec:{label:"⚡ Électrique",hydra:0,temp:"420–450 °C",txt:"Chaleur stable"},
+ooni:{label:"🔥 Gaz Ooni",hydra:+1,temp:"420–500 °C",txt:"Chaleur forte"}
+};
+
+Object.keys(farines).forEach(k=>{let o=document.createElement("option");o.value=k;o.textContent=farines[k].nom;farine.appendChild(o)});
+Object.keys(fours).forEach(k=>{let o=document.createElement("option");o.value=k;o.textContent=fours[k].label;modeFour.appendChild(o)});
+
+function changerFarine(){
+const f=farines[farine.value];
+hydratation.value=f.hydra;
+hydraSlider.value=f.hydra;
+updateHydraHint(f.hydra);
+farineInfo.innerHTML=`<b>${f.nom}</b> · ${f.w} · ${f.abs}`;
+}
+
+function updateHydraHint(v){
+hydraHint.textContent=
+v<=60?"🟢 Facile à travailler":
+v<=65?"🟠 Bon équilibre":
+v<=70?"🔴 Très souple":
+"🔥 Expert only";
+}
+hydraSlider.oninput=()=>{hydratation.value=hydraSlider.value;updateHydraHint(+hydraSlider.value)}
+hydratation.oninput=()=>{hydraSlider.value=hydratation.value;updateHydraHint(+hydratation.value)}
+
+function updateEmpatement(){bigaOptions.classList.toggle("hidden",empatement.value!=="biga")}
+function calculer(){
+
+/* --- BASE --- */
+const f = farines[farine.value];
+const four = fours[modeFour.value];
+
+const total = pizzas.value * poids.value;
+const hyd = (+hydratation.value + four.hydra) / 100;
+const sel = selPct.value / 100;
+
+/* --- FARINE / EAU / SEL --- */
+const farineTot = total / (1 + hyd + sel);
+const eauTot = farineTot * hyd;
+const selG = farineTot * sel;// === CALCUL LEVURE DYNAMIQUE GLOBAL (TOUS EMPÂTEMENTS) ===
+const hTot =
+  (+ta1h.value || 0) +
+  (+tcH.value || 0) +
+  (+ta2h.value || 0);
+
+const tMoy =
+  (
+    (ta1t.value * ta1h.value) +
+    (tcT.value * tcH.value) +
+    (ta2t.value * ta2h.value)
+  ) / hTot;
+
+let levTot = farineTot * 0.002 * f.coef * (20 / tMoy);
+
+if (typeLevure.value === "seche") levTot *= 0.33;
+
+
+
+
+/* --- TEXTE --- */
+let txt = `🍕 PROTOCOLE FUN PIZZA
+
+Farine : ${f.nom}
+Hydratation : ${hydratation.value} %
+
+`;
+
+/* ======================================================
+   EMPÂTEMENT DIRECT
+====================================================== */
+if(empatement.value === "direct"){
+  txt +=
+`INGRÉDIENTS
+Farine : ${farineTot.toFixed(1)} g
+Eau : ${eauTot.toFixed(1)} g
+Sel : ${selG.toFixed(1)} g
+Levure : ${levTot.toFixed(2)} g
+`;
+}
+
+/* ======================================================
+   BIGA
+   👉 1 g de levure / kg de farine biga (0,1 %)
+====================================================== */
+if(empatement.value === "biga"){
+  const pct = bigaPct.value / 100;
+
+  const farineB = farineTot * pct;
+  const eauB = farineB * 0.45;
+
+ // Base biga : 1 g / kg farine biga
+let levBigaBase = farineB * 0.001;
+
+// correction température / durée (comme levure totale)
+levBigaBase *= (20 / tMoy);
+
+let levBiga = levBigaBase;
+let levFinal = 0;
+
+// gestion split J-1 / J0
+if (bigaLevureMode.value === "split") {
+  levBiga = levBigaBase * 0.7;
+  levFinal = levBigaBase * 0.3;
+}
+
+// levure sèche
+if (typeLevure.value === "seche") {
+  levBiga *= 0.33;
+  levFinal *= 0.33;
+}
+
+
+  txt +=
+`BIGA (J-1)
+Farine : ${farineB.toFixed(1)} g
+Eau : ${eauB.toFixed(1)} g
+Levure : ${levBiga.toFixed(2)} g
+
+PÂTE FINALE (J0)
+Farine : ${(farineTot - farineB).toFixed(1)} g
+Eau : ${(eauTot - eauB).toFixed(1)} g
+Sel : ${selG.toFixed(1)} g
+Levure : ${levFinal.toFixed(2)} g
+`;
+}
+
+/* ======================================================
+   POOLISH
+====================================================== */
+if(empatement.value === "poolish"){
+  const farineP = farineTot * 0.5;
+  const eauP = farineP;
+  const levP = levTot * 0.5;
+
+  txt +=
+`POOLISH (J-1)
+Farine : ${farineP.toFixed(1)} g
+Eau : ${eauP.toFixed(1)} g
+Levure : ${levP.toFixed(2)} g
+
+PÂTE FINALE (J0)
+Farine : ${(farineTot - farineP).toFixed(1)} g
+Eau : ${(eauTot - eauP).toFixed(1)} g
+Sel : ${selG.toFixed(1)} g
+Levure : ${(levTot - levP).toFixed(2)} g
+`;
+}
+
+/* --- FOUR --- */
+txt += `
+Four : ${four.label}
+Température : ${four.temp}
+
+À moment donné… fais confiance à la fermentation 😉`;
+
+txt += calculPlanning();
+fiche.textContent = txt;
+}
+
+function exportPDF(){
+const {jsPDF}=window.jspdf;
+const pdf=new jsPDF();
+pdf.text(fiche.textContent,10,10);
+pdf.save("Pizza-Protocole.pdf");
+}
+
+function ajusterTemps(heures, temp){
+  if(!heures || !temp) return heures;
+
+  let facteur = 20 / temp;
+  facteur = Math.max(0.5, Math.min(2, facteur));
+
+  return heures * facteur;
+}
+
+function calculPlanning(){
+
+  if(!startDate.value || !startTime.value) return "";
+
+  let start = new Date(startDate.value + "T" + startTime.value);
+
+  let TA1 = ajusterTemps(+ta1h.value, +ta1t.value);
+  let TC  = ajusterTemps(+tcH.value, +tcT.value);
+  let TA2 = ajusterTemps(+ta2h.value, +ta2t.value);
+
+  let endTA1 = new Date(start.getTime() + TA1 * 3600000);
+  let endTC  = new Date(endTA1.getTime() + TC * 3600000);
+  let endTA2 = new Date(endTC.getTime() + TA2 * 3600000);
+
+  const f = d => d.toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"});
+
+  timeline.innerHTML = `
+    <div class="timeline-step">🥣 Départ pâte : ${f(start)}</div>
+    <div class="timeline-step">🌡 Fin TA1 : ${f(endTA1)}</div>
+    <div class="timeline-step">❄️ Fin TC : ${f(endTC)}</div>
+    <div class="timeline-step">🔥 Cuisson idéale : ${f(endTA2)}</div>
+  `;
+
+  return `
+📆 PLANNING
+
+🥣 Départ pâte : ${f(start)}
+🌡 Fin TA1 : ${f(endTA1)}
+❄️ Fin TC : ${f(endTC)}
+🔥 Cuisson idéale : ${f(endTA2)}
+`;
+}
+function setDuree(totalH){
+
+  // récupérer W de la farine
+  const f = farines[farine.value];
+  const W = parseInt(f.w.replace("W",""));
+
+  let TA1, TC, TA2;
+
+  // répartition selon force farine
+  if(W <= 280){
+    TA1 = 2;
+    TA2 = 2;
+  } else if(W <= 300){
+    TA1 = 3;
+    TA2 = 3;
+  } else {
+    TA1 = 4;
+    TA2 = 4;
+  }
+
+  TC = totalH - TA1 - TA2;
+
+  // sécurité
+  if(TC < 0) TC = 0;
+
+  ta1h.value = TA1;
+  tcH.value  = TC;
+  ta2h.value = TA2;
+}
+
+changerFarine();
+</script>
+</body>
+</html>
